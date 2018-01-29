@@ -17,8 +17,8 @@ title: 欢迎来到首都北京
 email: lyriezheng@gmail.com
 description: >- # this means to ignore newlines until "baseurl:"
   精彩世界，敬请期待。
-baseurl: "" # the subpath of your site, e.g. /blog
-url: "http://lyriezheng.github.io" # the base hostname & protocol for your site, e.g. http://example.com
+baseurl: "/lyriezheng.github.io" # the subpath of your site, e.g. /blog
+url: "https://lyriezheng.github.io" #s the base hostname & protocol for your site, e.g. http://example.com
 twitter_username: jekyllrb
 github_username:  jekyll
 
