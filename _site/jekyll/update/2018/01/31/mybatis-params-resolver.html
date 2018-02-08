@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Begin Jekyll SEO tag v2.4.0 -->
+<title>mybatis参数解析逻辑 | 欢迎来到首都北京</title>
+<meta name="generator" content="Jekyll v3.7.2" />
+<meta property="og:title" content="mybatis参数解析逻辑" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="我们的sql操作往往需要使用参数，那么我们在使用mybatis的时候给方法提供的参数是如何被解析的呢？ 整个解析过程分为方法形参解析和实参映射两部分。 当我们调用一个mapper的方法时，mybatis做的第一步是进行实参转换，生成一个通用的参数对象。 解析过程用到了ParamNameResolver对象，发生在ParamNameResolver在预处理Method的时候。 ParamNameResolver遍历方法参数： 如果参数是ResultHandler或者RowBonds，跳过。 如果参数有param注解，取得注解值作为name。 如果没有param注解，则使用形参名作为name。 如果没有形参，则使用有效参数序号作为name。 所有的参数存储到一个参数序号-&gt;name的 TreeMap中。使用TreeMap的原因是TreeMap可以保证数据按照参数的顺序有序。 通过实参生成参数对象时，如果没有实参，返回一个Null，否则取得前面所讲的TreeMap，遍历这个TreeMap，按照name-&gt;实参数组[参数序号]的结构把数据放到一个ParamMap中，解析得到的参数对象就是这个ParamMap。 参数对象的使用我们将在方法调用中介绍" />
+<meta property="og:description" content="我们的sql操作往往需要使用参数，那么我们在使用mybatis的时候给方法提供的参数是如何被解析的呢？ 整个解析过程分为方法形参解析和实参映射两部分。 当我们调用一个mapper的方法时，mybatis做的第一步是进行实参转换，生成一个通用的参数对象。 解析过程用到了ParamNameResolver对象，发生在ParamNameResolver在预处理Method的时候。 ParamNameResolver遍历方法参数： 如果参数是ResultHandler或者RowBonds，跳过。 如果参数有param注解，取得注解值作为name。 如果没有param注解，则使用形参名作为name。 如果没有形参，则使用有效参数序号作为name。 所有的参数存储到一个参数序号-&gt;name的 TreeMap中。使用TreeMap的原因是TreeMap可以保证数据按照参数的顺序有序。 通过实参生成参数对象时，如果没有实参，返回一个Null，否则取得前面所讲的TreeMap，遍历这个TreeMap，按照name-&gt;实参数组[参数序号]的结构把数据放到一个ParamMap中，解析得到的参数对象就是这个ParamMap。 参数对象的使用我们将在方法调用中介绍" />
+<link rel="canonical" href="http://localhost:4000/jekyll/update/2018/01/31/mybatis-params-resolver.html" />
+<meta property="og:url" content="http://localhost:4000/jekyll/update/2018/01/31/mybatis-params-resolver.html" />
+<meta property="og:site_name" content="欢迎来到首都北京" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2018-01-31T11:21:00+08:00" />
+<script type="application/ld+json">
+{"mainEntityOfPage":{"@type":"WebPage","@id":"http://localhost:4000/jekyll/update/2018/01/31/mybatis-params-resolver.html"},"description":"我们的sql操作往往需要使用参数，那么我们在使用mybatis的时候给方法提供的参数是如何被解析的呢？ 整个解析过程分为方法形参解析和实参映射两部分。 当我们调用一个mapper的方法时，mybatis做的第一步是进行实参转换，生成一个通用的参数对象。 解析过程用到了ParamNameResolver对象，发生在ParamNameResolver在预处理Method的时候。 ParamNameResolver遍历方法参数： 如果参数是ResultHandler或者RowBonds，跳过。 如果参数有param注解，取得注解值作为name。 如果没有param注解，则使用形参名作为name。 如果没有形参，则使用有效参数序号作为name。 所有的参数存储到一个参数序号-&gt;name的 TreeMap中。使用TreeMap的原因是TreeMap可以保证数据按照参数的顺序有序。 通过实参生成参数对象时，如果没有实参，返回一个Null，否则取得前面所讲的TreeMap，遍历这个TreeMap，按照name-&gt;实参数组[参数序号]的结构把数据放到一个ParamMap中，解析得到的参数对象就是这个ParamMap。 参数对象的使用我们将在方法调用中介绍","@type":"BlogPosting","url":"http://localhost:4000/jekyll/update/2018/01/31/mybatis-params-resolver.html","headline":"mybatis参数解析逻辑","dateModified":"2018-01-31T11:21:00+08:00","datePublished":"2018-01-31T11:21:00+08:00","@context":"http://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+
+  <link rel="stylesheet" href="/assets/main.css">
+  <link rel="alternate" type="application/rss+xml" title="欢迎来到首都北京" href="/feed.xml">
+  
+</head>
+
+
+  <body>
+
+    <header class="site-header" role="banner">
+
+  <div class="wrapper">
+    
+    
+    <a class="site-title" rel="author" href="/">欢迎来到首都北京</a>
+
+    
+      <nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+              <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+              <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger">
+          
+            
+            
+          
+            
+            
+            <a class="page-link" href="/about/">About</a>
+            
+          
+            
+            
+          
+            
+            
+          
+            
+            
+          
+        </div>
+      </nav>
+    
+  </div>
+</header>
+
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">mybatis参数解析逻辑</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2018-01-31T11:21:00+08:00" itemprop="datePublished">
+        
+        Jan 31, 2018
+      </time>
+      </p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <p>我们的sql操作往往需要使用参数，那么我们在使用mybatis的时候给方法提供的参数是如何被解析的呢？</p>
+<ul>
+  <li>整个解析过程分为方法形参解析和实参映射两部分。</li>
+  <li>当我们调用一个mapper的方法时，mybatis做的第一步是进行实参转换，生成一个通用的参数对象。</li>
+  <li>解析过程用到了ParamNameResolver对象，发生在ParamNameResolver在预处理Method的时候。</li>
+  <li>ParamNameResolver遍历方法参数：
+    <ol>
+      <li>如果参数是ResultHandler或者RowBonds，跳过。</li>
+      <li>如果参数有param注解，取得注解值作为name。</li>
+      <li>如果没有param注解，则使用形参名作为name。</li>
+      <li>如果没有形参，则使用<strong>有效</strong>参数序号作为name。</li>
+      <li>所有的参数存储到一个参数序号-&gt;name的 TreeMap中。使用TreeMap的原因是TreeMap可以保证数据按照参数的顺序有序。</li>
+    </ol>
+  </li>
+  <li>通过实参生成参数对象时，如果没有实参，返回一个Null，否则取得前面所讲的TreeMap，遍历这个TreeMap，按照name-&gt;实参数组[参数序号]的结构把数据放到一个ParamMap中，解析得到的参数对象就是这个ParamMap。</li>
+</ul>
+
+<p><strong>参数对象的使用我们将在方法调用中介绍</strong></p>
+
+  </div>
+
+  
+
+  <a class="u-url" href="/jekyll/update/2018/01/31/mybatis-params-resolver.html" hidden></a>
+</article>
+
+      </div>
+    </main>
+
+    <footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">欢迎来到首都北京</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">
+            
+              欢迎来到首都北京
+            
+            </li>
+            
+            <li><a class="u-email" href="mailto:lyriezheng@gmail.com">lyriezheng@gmail.com</a></li>
+            
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-2">
+        <ul class="social-media-list">
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+</ul>
+
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p>精彩世界，敬请期待。</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+
+
+  </body>
+
+</html>

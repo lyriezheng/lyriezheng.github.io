@@ -2,7 +2,7 @@
 layout: post
 title:  "mybatis参数解析逻辑"
 date:   2018-01-31 11:21 +0800
-categories: jekyll update
+categories: mybatis
 ---
 
 我们的sql操作往往需要使用参数，那么我们在使用mybatis的时候给方法提供的参数是如何被解析的呢？
